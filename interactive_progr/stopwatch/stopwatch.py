@@ -2,7 +2,7 @@ import simplegui
 import math
 
 #
-#  ________  __                                __          __
+#   ________  __                                __          __
 #  /   _____//  |_  ____ ________  _  _______ _/  |_  ____ |  |__
 #  \_____  \\   __\/  _ \\____ \ \/ \/ /\__  \\   __\/ ___\|  |  \
 #  /        \|  | (  <_> )  |_> >     /  / __ \|  | \  \___|   Y  \
@@ -30,17 +30,27 @@ score = 0
 
 hex_values = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, "a", "b", "c", "d", "e", "f"]
 
+#_my_font = simplegui.load_image("http://www.dropbox.com/s/q8vi3nw3zts73xf/font.png?dl=1")
+_my_font = simplegui.load_image(
+    "https://raw.github.com/pavelpisakov/coursera/master/interactive_progr/stopwatch/font.png"
+)
+_my_font_str = "0123456789:./"
+_char_width = 17
+_char_height = 32
+_margin = 7
+
+
 def format(number):
 
-    minutes = int(((number / 10) / 60) % 60)
-    seconds = int((number/10) % 60) 
+    minutes = (number // 600) % 60
+    seconds = (number // 10) % 60
     millis = number % 10
 
     result = str(minutes) + ":"
     if seconds < 10:
         result += "0"
     result += str(seconds)
-    result += ":"
+    result += "."
     result += str(millis)
 
     return result
@@ -64,6 +74,28 @@ def tick():
             active_marker = 12 - active_marker
             active_marker += 3
             active_marker %= 12
+
+
+def render_text(canvas, text, position):
+    
+    current_position = list(position)
+   
+    for char in text:
+        
+        if char in _my_font_str:
+            image_center = (21 + _my_font_str.index(char) * _char_width, 36)
+        else:
+            image_center = (_char_width // 2, _char_height // 2)
+        
+        draw_position = list(current_position)
+        draw_position[0] += _char_width // 2
+        draw_position[1] -= _char_height // 2
+        
+        canvas.draw_image(_my_font, image_center,
+                          (_char_width, _char_height),
+                          draw_position, (_char_width, _char_height))
+        current_position[0] += _char_width
+
 
 def draw(canvas):
 
@@ -101,16 +133,25 @@ def draw(canvas):
     canvas.draw_circle(_clock_middle, 1, 2, _bg_color)
     
     text = format(time)
-    width = frame.get_canvas_textwidth(text, _text_size, _font)
     
-    canvas.draw_text(text, [(300 - width)/2, 310], _text_size, _fg_color, _font)
+    # as image
+    text_width = len(text) * _char_width
+    render_text(canvas, text, ((300 - text_width) // 2, 310))
+    
+    # as plain text
+    #text_width = frame.get_canvas_textwidth(text, _text_size, _font)
+    #canvas.draw_text(text, [(300 - width)/2, 310], _text_size, _fg_color, _font)
 
     score_text = str(score) + "/" + str(tries)
-    width = frame.get_canvas_textwidth(score_text, _text_size, _font)
-
-    canvas.draw_text(score_text, [(300 - width) - 6, 27], _text_size, _fg_color, _font)
-
-
+    
+    # as image
+    score_text_width = len(score_text) * _char_width
+    render_text(canvas, score_text, (300 - score_text_width - _margin, 0 + _char_height + _margin))
+    
+    # as plain text
+    #width = frame.get_canvas_textwidth(score_text, _text_size, _font)
+    #canvas.draw_text(score_text, [(300 - width) - 6, 27], _text_size, _fg_color, _font)
+    
 def start_handler():
     if not timer.is_running():
         timer.start()
