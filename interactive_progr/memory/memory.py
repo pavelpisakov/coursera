@@ -17,6 +17,9 @@ import random
 #
 # Thanks
 #
+# Link to GitHub:
+# https://github.com/pavelpisakov/coursera/tree/master/interactive_progr/memory
+#
 #
 
 FRAME_BORDER = 4
