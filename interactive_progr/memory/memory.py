@@ -1,6 +1,24 @@
 import simplegui
 import random
 
+#
+#   _____  ___________   _____   ________ _______________.___.
+#   /     \ \_   _____/  /     \  \_____  \\______   \__  |   |
+#  /  \ /  \ |    __)_  /  \ /  \  /   |   \|       _//   |   |
+# /    Y    \|        \/    Y    \/    |    \    |   \\____   |
+# \____|__  /_______  /\____|__  /\_______  /____|_  // ______|
+#         \/        \/         \/         \/       \/ \/       
+#
+#
+# Do not be in a hurry.
+#
+# Wait until sprite image is loaded.
+# Game has 4 levels. Please try to solve them all.
+#
+# Thanks
+#
+#
+
 FRAME_BORDER = 4
 
 CARDS_IMG = simplegui.load_image("https://www.dropbox.com/s/k9hzmcd4pl28b35/cards.png?dl=1")
@@ -23,6 +41,7 @@ MAX_GAME_LEVEL = 4
 GAME_LEVEL = MIN_GAME_LEVEL
 
 TIME = 0
+TURNS = 0
 
 MENU_SIZE = [350, 200]
 FRAME_CENTER = [FRAME_WIDTH // 2, (FRAME_HEIGHT - PANEL_HEIGHT) // 2]
@@ -35,6 +54,7 @@ MENU_VECTOR = [
 ]
 
 SCORE = [0, 0, 0, 0]
+TURNS_STORE = [0, 0, 0, 0]
 
 
 def tick():
@@ -42,10 +62,12 @@ def tick():
     TIME += 1
 
 
+# global
 timer = simplegui.create_timer(1000, tick)
 
 
 class Game(object):
+
     def __init__(self):
         self.reset()
 
@@ -77,7 +99,13 @@ class Game(object):
         return self.score_page
 
     def set_score_page(self, state):
+
         self.score_page = state
+
+        if self.score_page:
+            self.game_in_progress = False
+            self.start_game_page = False
+            self.level_end_page = False
 
     def __str__(self):
         return "This game"
@@ -87,6 +115,7 @@ game = Game()
 
 
 class Hand(object):
+
     def __init__(self):
         self.hand = []
 
@@ -126,6 +155,7 @@ hand = Hand()
 
 
 class Card(object):
+
     def __init__(self, name, suit, position=(50, 50)):
         self.name = name
         self.suit = suit
@@ -151,12 +181,12 @@ class Card(object):
 
         # get src position
         if self.front:
-            x = CARD_NAMES.index(self.name) * SRC_CARD_SIZE[0] + SRC_CARD_SIZE[0] // 2 + 1
-            y = CARD_SUITS.index(self.suit) * SRC_CARD_SIZE[1] + SRC_CARD_SIZE[1] // 2 + 1
+            x = CARD_NAMES.index(self.name) * SRC_CARD_SIZE[0] + SRC_CARD_SIZE[0]//2 + 1
+            y = CARD_SUITS.index(self.suit) * SRC_CARD_SIZE[1] + SRC_CARD_SIZE[1]//2 + 1
         else:
             # Magic
-            x = 2 * SRC_CARD_SIZE[0] + SRC_CARD_SIZE[0] // 2 + 1
-            y = 4 * SRC_CARD_SIZE[1] + SRC_CARD_SIZE[1] // 2 + 1
+            x = 2 * SRC_CARD_SIZE[0] + SRC_CARD_SIZE[0]//2 + 1
+            y = 4 * SRC_CARD_SIZE[1] + SRC_CARD_SIZE[1]//2 + 1
 
         card_position = [x, y]
 
@@ -181,6 +211,7 @@ class Card(object):
 
 
 class MouseHandlerFactory:
+
     def __init__(self):
         self.current_mouse_handler = None
         self.card_mouse_handler = MouseCardObserver()
@@ -211,6 +242,7 @@ class MouseHandlerFactory:
 
 
 class MouseCardObserver:
+
     def __init__(self):
         self.listeners = []
         self.state = 0
@@ -220,6 +252,8 @@ class MouseCardObserver:
         self.listeners.append(obj)
 
     def invoke(self, position):
+
+        global TURNS
 
         for listener in self.listeners:
             if listener.has(position):
@@ -241,6 +275,8 @@ class MouseCardObserver:
                         # store link to that card
                         self.saved.append(listener)
 
+                        TURNS += 1
+
                     elif self.state == 1:
 
                         # making a step
@@ -254,7 +290,11 @@ class MouseCardObserver:
                                 self.saved[1] == self.saved[0])):
 
                             if hand.all_guessed():
-                                SCORE[GAME_LEVEL - 1] = TIME
+
+                                # Store results
+                                SCORE[GAME_LEVEL-1] = TIME
+                                TURNS_STORE[GAME_LEVEL-1] = TURNS
+
                                 game.set_game_in_progress(False)
                                 if GAME_LEVEL <= MAX_GAME_LEVEL:
                                     game.set_level_end_page(True)
@@ -277,6 +317,8 @@ class MouseCardObserver:
                         self.state = 1
 
                         self.saved = []
+
+                        TURNS += 1
 
                         # making the action
                         listener.action_face_up()
@@ -303,7 +345,6 @@ class MouseMenuObserver(object):
     def add_listener(self, o):
         self.listener = o
 
-    # noinspection PyUnusedLocal
     def invoke(self, position):
 
         if game.is_start_game_page():
@@ -324,12 +365,14 @@ mouse_handler_factory = MouseHandlerFactory()
 
 
 def draw(canvas):
+
     for card in hand.get_hand():
         card.draw(canvas)
 
     canvas.draw_text("Level: " + str(GAME_LEVEL), [FRAME_BORDER, FRAME_HEIGHT - FRAME_BORDER], 15, "Black")
 
-    time_text = "Time: " + str(TIME)
+    time_text = "Time: " + str(TIME) + " Turns: " + str(TURNS)
+
     text_width = frame.get_canvas_textwidth(time_text, 15)
     canvas.draw_text(time_text, [FRAME_WIDTH - FRAME_BORDER - text_width, FRAME_HEIGHT - FRAME_BORDER], 15, "Black")
 
@@ -345,7 +388,7 @@ def draw(canvas):
         text_width = frame.get_canvas_textwidth(welcome_text, 20)
         canvas.draw_text(welcome_text, [FRAME_CENTER[0] - text_width // 2, 175], 20, "White")
 
-        welcome_text = "Press mouse button to start"
+        welcome_text = "Click to start"
         text_width = frame.get_canvas_textwidth(welcome_text, 20)
         canvas.draw_text(welcome_text, [FRAME_CENTER[0] - text_width // 2, 215], 20, "White")
 
@@ -357,13 +400,9 @@ def draw(canvas):
         mouse_handler_factory.set_active("menu")
         canvas.draw_polygon(MENU_VECTOR, 1, "Black", "rgba(0, 0, 0, 0.7)")
 
-        welcome_text = "Nice job"
+        welcome_text = "Level: " + str(GAME_LEVEL)
         text_width = frame.get_canvas_textwidth(welcome_text, 20)
-        canvas.draw_text(welcome_text, [FRAME_CENTER[0] - text_width // 2, 175], 20, "White")
-
-        welcome_text = "Your time is: " + str(SCORE[GAME_LEVEL - 2])
-        text_width = frame.get_canvas_textwidth(welcome_text, 20)
-        canvas.draw_text(welcome_text, [FRAME_CENTER[0] - text_width // 2, 215], 20, "White")
+        canvas.draw_text(welcome_text, [FRAME_CENTER[0] - text_width // 2, FRAME_CENTER[1] + 10], 20, "White")
 
     elif game.is_score_page():
 
@@ -373,15 +412,28 @@ def draw(canvas):
         mouse_handler_factory.set_active("menu")
         canvas.draw_polygon(MENU_VECTOR, 1, "Black", "rgba(0, 0, 0, 0.7)")
 
-        welcome_text = "You win!"
-        text_width = frame.get_canvas_textwidth(welcome_text, 20)
-        canvas.draw_text(welcome_text, [FRAME_CENTER[0] - text_width // 2, 175], 20, "White")
-
         result = 0
+
+        # Absoluterly random numbers
         result += SCORE[0] if SCORE[0] != 0 else 70
         result += SCORE[1] if SCORE[1] != 0 else 120
         result += SCORE[2] if SCORE[2] != 0 else 200
         result += SCORE[3] if SCORE[3] != 0 else 400
+
+        result += TURNS_STORE[0] if TURNS_STORE[0] >= 6 else 20
+        result += TURNS_STORE[1] if TURNS_STORE[1] >= 12 else 50
+        result += TURNS_STORE[2] if TURNS_STORE[2] >= 18 else 200
+        result += TURNS_STORE[3] if TURNS_STORE[3] >= 24 else 500
+
+        if result > 1000:
+            welcome_text = "You could do better."
+        elif result > 500:
+            welcome_text = "Nice job!"
+        else:
+            welcome_text = "You win!"
+
+        text_width = frame.get_canvas_textwidth(welcome_text, 20)
+        canvas.draw_text(welcome_text, [FRAME_CENTER[0] - text_width // 2, 175], 20, "White")
 
         welcome_text = "Your score: " + str(result)
         text_width = frame.get_canvas_textwidth(welcome_text, 20)
@@ -462,11 +514,11 @@ def pack():
         if rows == 1:
             y = (FRAME_HEIGHT - PANEL_HEIGHT) // 2
         elif rows == 2:
-            y = (FRAME_HEIGHT - PANEL_HEIGHT) // 2 - 1.5 * DEST_CARD_SIZE[1] - 0.5 * MARGIN + (i // 12 + 1) * (
-                DEST_CARD_SIZE[1] + MARGIN)
+            y = (FRAME_HEIGHT - PANEL_HEIGHT) // 2 - 1.5 * DEST_CARD_SIZE[1] - 0.5 * MARGIN + (i // 12 + 1) * \
+                (DEST_CARD_SIZE[1] + MARGIN)
         elif rows == 3:
-            y = (FRAME_HEIGHT - PANEL_HEIGHT) // 2 - 2 * DEST_CARD_SIZE[1] - MARGIN + (i // 12 + 1) * (
-                DEST_CARD_SIZE[1] + MARGIN)
+            y = (FRAME_HEIGHT - PANEL_HEIGHT) // 2 - 2 * DEST_CARD_SIZE[1] - MARGIN + (i // 12 + 1) * \
+                (DEST_CARD_SIZE[1] + MARGIN)
         else:
             y = FRAME_BORDER + (i // 12) * (DEST_CARD_SIZE[1] + MARGIN) + DEST_CARD_SIZE[1] // 2
 
@@ -474,15 +526,19 @@ def pack():
 
 
 def game_start():
+
     global TIME
+    global TURNS
 
     init()
     pack()
 
     TIME = 0
+    TURNS = 0
 
 
 def reset():
+
     global GAME_LEVEL
 
     GAME_LEVEL = MIN_GAME_LEVEL
@@ -491,6 +547,7 @@ def reset():
 
 
 def raise_level():
+
     global GAME_LEVEL
 
     if GAME_LEVEL < MAX_GAME_LEVEL:
