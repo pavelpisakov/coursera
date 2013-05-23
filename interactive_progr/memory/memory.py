@@ -21,7 +21,11 @@ import random
 
 FRAME_BORDER = 4
 
-CARDS_IMG = simplegui.load_image("https://www.dropbox.com/s/k9hzmcd4pl28b35/cards.png?dl=1")
+#CARDS_IMG = simplegui.load_image("https://www.dropbox.com/s/k9hzmcd4pl28b35/cards.png?dl=1")
+CARDS_IMG = simplegui.load_image(
+    "https://raw.github.com/pavelpisakov/coursera/master/interactive_progr/memory/cards.png"
+)
+
 SRC_CARD_SIZE = [79, 123]
 
 FACTOR = 3 / 4
