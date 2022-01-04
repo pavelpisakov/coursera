@@ -31,7 +31,7 @@ CARDS_IMG = simplegui.load_image(
 
 SRC_CARD_SIZE = [79, 123]
 
-FACTOR = 3 / 4
+FACTOR = 3 / 4.
 DEST_CARD_SIZE = [SRC_CARD_SIZE[0] * FACTOR, SRC_CARD_SIZE[1] * FACTOR]
 MARGIN = 2
 
